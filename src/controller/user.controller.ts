@@ -1,4 +1,4 @@
-import User from "../sqlite-connection";
+import User from "../model/user.model";
 import { Request, Response } from "express";
 import fs from "fs";
 import path from "path";

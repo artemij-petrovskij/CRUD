@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
-const sqlite_connection_1 = __importDefault(require("../sqlite-connection"));
+const user_model_1 = __importDefault(require("../model/user.model"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const pdfkit_1 = __importDefault(require("pdfkit"));
@@ -22,7 +22,7 @@ class UserController {
     getUsers(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const user = yield sqlite_connection_1.default.findAll();
+                const user = yield user_model_1.default.findAll();
                 res.status(200).json(user);
             }
             catch (err) {
@@ -34,7 +34,7 @@ class UserController {
     getOneUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
-            const user = yield sqlite_connection_1.default.findOne({ where: { id: id } });
+            const user = yield user_model_1.default.findOne({ where: { id: id } });
             if (user !== null) {
                 res.status(200).json(user);
             }
@@ -47,7 +47,7 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             // email, firstName, lastName REQUIRED!
             const { email, firstName, lastName, image, pdf } = req.body;
-            const user = yield sqlite_connection_1.default.create({
+            const user = yield user_model_1.default.create({
                 email: email,
                 firstName: firstName,
                 lastName: lastName,
@@ -60,9 +60,9 @@ class UserController {
     deleteUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
-            const checkUserIsset = yield sqlite_connection_1.default.findOne({ where: { id: id } });
+            const checkUserIsset = yield user_model_1.default.findOne({ where: { id: id } });
             if (checkUserIsset !== null) {
-                yield sqlite_connection_1.default.destroy({
+                yield user_model_1.default.destroy({
                     where: {
                         id: id,
                     },
@@ -78,9 +78,9 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             const { email, firstName, lastName, image, pdf } = req.body;
             const { id } = req.params;
-            const checkUserIsset = yield sqlite_connection_1.default.findOne({ where: { id: id } });
+            const checkUserIsset = yield user_model_1.default.findOne({ where: { id: id } });
             if (checkUserIsset !== null) {
-                yield sqlite_connection_1.default.update({
+                yield user_model_1.default.update({
                     email: email,
                     firstName: firstName,
                     lastName: lastName,
@@ -102,12 +102,12 @@ class UserController {
         return __awaiter(this, void 0, void 0, function* () {
             const label = req.files.img.name;
             const { id } = req.params;
-            const checkUserIsset = yield sqlite_connection_1.default.findOne({ where: { id: id } });
+            const checkUserIsset = yield user_model_1.default.findOne({ where: { id: id } });
             console.log(checkUserIsset);
             if (checkUserIsset !== null) {
                 try {
                     req.files.img.mv("./dist/public/images/" + req.files.img.name);
-                    yield sqlite_connection_1.default.update({
+                    yield user_model_1.default.update({
                         image: "/images/" + label,
                     }, { where: { id: id } });
                 }
@@ -127,7 +127,7 @@ class UserController {
     generateUserPDF(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { email } = req.body;
-            const user = yield sqlite_connection_1.default.findOne({ where: { email: email } });
+            const user = yield user_model_1.default.findOne({ where: { email: email } });
             if (user !== null) {
                 const doc = new pdfkit_1.default();
                 doc.pipe(fs_1.default.createWriteStream(path_1.default.join(__dirname, `../../dist/temp/${email}.pdf`)));
@@ -137,7 +137,7 @@ class UserController {
                 doc.image(path_1.default.join(__dirname, "../../dist/public/", user.image), 320, 280, { scale: 0.4 });
                 doc.end();
                 const stringBuf = Buffer.from(path_1.default.join(__dirname, `../../dist/temp/${email}.pdf`));
-                sqlite_connection_1.default.update({
+                user_model_1.default.update({
                     pdf: new buffer_1.Blob([stringBuf], { type: "application/pdf" }),
                 }, { where: { email: email } });
                 res.status(200).send("PDF successfuly generated and saved");
